@@ -13,7 +13,10 @@
       .card h2 { font-size: 1rem; margin-bottom: 10px; color: #555; }
       .score { font-size: 2.5rem; font-weight: bold; color: #2a6496; }
       .bar-bg { background: #eee; border-radius: 10px; height: 10px; margin-top: 10px; }
-      .bar { height: 10px; border-radius: 10px; background: #2a6496; }
+      .bar { height: 10px; border-radius: 10px; background: #2a6496; transition: width 0.3s; }
+      input[type=range] { width: 100%; margin-top: 12px; accent-color: #2a6496; }
+      .save-btn { display: block; margin: 30px auto 0; padding: 12px 40px; background: #2a6496; color: white; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer; }
+      .save-btn:hover { background: #1e4f78; }
     </style>
   </head>
   <body>
@@ -21,29 +24,51 @@
     <div class="grid">
       <div class="card">
         <h2>Mind</h2>
-        <div class="score">7/10</div>
-        <div class="bar-bg"><div class="bar" style="width: 70%"></div></div>
+        <div class="score" id="mind-score">7/10</div>
+        <div class="bar-bg"><div class="bar" id="mind-bar" style="width: 70%"></div></div>
+        <input type="range" min="0" max="10" value="7" oninput="update('mind', this.value)">
       </div>
       <div class="card">
         <h2>Heart</h2>
-        <div class="score">6/10</div>
-        <div class="bar-bg"><div class="bar" style="width: 60%"></div></div>
+        <div class="score" id="heart-score">6/10</div>
+        <div class="bar-bg"><div class="bar" id="heart-bar" style="width: 60%"></div></div>
+        <input type="range" min="0" max="10" value="6" oninput="update('heart', this.value)">
       </div>
       <div class="card">
         <h2>Energy</h2>
-        <div class="score">8/10</div>
-        <div class="bar-bg"><div class="bar" style="width: 80%"></div></div>
+        <div class="score" id="energy-score">8/10</div>
+        <div class="bar-bg"><div class="bar" id="energy-bar" style="width: 80%"></div></div>
+        <input type="range" min="0" max="10" value="8" oninput="update('energy', this.value)">
       </div>
       <div class="card">
         <h2>Presence</h2>
-        <div class="score">5/10</div>
-        <div class="bar-bg"><div class="bar" style="width: 50%"></div></div>
+        <div class="score" id="presence-score">5/10</div>
+        <div class="bar-bg"><div class="bar" id="presence-bar" style="width: 50%"></div></div>
+        <input type="range" min="0" max="10" value="5" oninput="update('presence', this.value)">
       </div>
       <div class="card">
         <h2>Drive</h2>
-        <div class="score">9/10</div>
-        <div class="bar-bg"><div class="bar" style="width: 90%"></div></div>
+        <div class="score" id="drive-score">9/10</div>
+        <div class="bar-bg"><div class="bar" id="drive-bar" style="width: 90%"></div></div>
+        <input type="range" min="0" max="10" value="9" oninput="update('drive', this.value)">
       </div>
     </div>
-  </body>
-</html>
+    <button class="save-btn" onclick="saveWeek()">Save this week</button>
+
+    <script>
+      function update(pillar, value) {
+        document.getElementById(pillar + '-score').textContent = value + '/10';
+        document.getElementById(pillar + '-bar').style.width = (value * 10) + '%';
+      }
+
+      function saveWeek() {
+        const week = {
+          date: new Date().toLocaleDateString(),
+          mind: document.getElementById('mind-bar').style.width,
+          heart: document.getElementById('heart-bar').style.width,
+          energy: document.getElementById('energy-bar').style.width,
+          presence: document.getElementById('presence-bar').style.width,
+          drive: document.getElementById('drive-bar').style.width,
+        };
+        console.log('Week saved:', week);
+        alert('Week saved! (check console

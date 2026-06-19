@@ -22,176 +22,73 @@
     margin-bottom: 25px;
   }
 
-  /* Overall score */
-  .score-panel {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-bottom: 25px;
-  }
-  .score-value {
-    font-size: 3rem;
-    font-weight: bold;
-    color: #39ff14;
-    text-shadow: 0 0 8px #39ff14;
-  }
+  .score-panel { display: flex; flex-direction: column; align-items: center; margin-bottom: 25px; }
+  .score-value { font-size: 3rem; font-weight: bold; color: #39ff14; text-shadow: 0 0 8px #39ff14; }
   .score-label { font-size: 0.8rem; color: #888; text-transform: uppercase; letter-spacing: 2px; }
 
-  /* Pillars row */
-  .pillars {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 14px;
-    max-width: 1100px;
-    margin: 0 auto 35px auto;
-  }
-  .pillar-card {
-    background: #232323;
-    border: 1px solid #333;
-    border-radius: 10px;
-    padding: 14px 8px;
-    text-align: center;
-  }
-  .pillar-card h3 {
-    font-size: 0.8rem;
-    color: #aaa;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 8px;
-  }
-  .pillar-card .pillar-score {
-    font-size: 1.6rem;
-    font-weight: bold;
-    color: #39ff14;
-    margin-bottom: 8px;
-  }
+  .pillars { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; max-width: 1100px; margin: 0 auto 35px auto; }
+  .pillar-card { background: #232323; border: 1px solid #333; border-radius: 10px; padding: 14px 8px; text-align: center; }
+  .pillar-card h3 { font-size: 0.8rem; color: #aaa; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+  .pillar-card .pillar-score { font-size: 1.6rem; font-weight: bold; color: #39ff14; margin-bottom: 8px; }
   .pillar-buttons { display: flex; justify-content: center; gap: 8px; }
   .pillar-buttons button {
-    background: #2a2a2a;
-    border: 1px solid #39ff14;
-    color: #39ff14;
-    padding: 5px 10px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-family: inherit;
-    font-size: 0.85rem;
-    transition: background 0.2s;
+    background: #2a2a2a; border: 1px solid #39ff14; color: #39ff14;
+    padding: 5px 10px; border-radius: 6px; cursor: pointer; font-family: inherit;
+    font-size: 0.85rem; transition: background 0.2s;
   }
   .pillar-buttons button:hover { background: #39ff14; color: #1a1a1a; }
 
-  /* Board */
-  .board {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
-    max-width: 1100px;
-    margin: 0 auto;
-  }
-  .column {
-    background: #232323;
-    border-radius: 10px;
-    padding: 15px;
-    min-height: 400px;
-  }
-  .column h2 {
-    color: #39ff14;
-    font-size: 1.1rem;
-    margin-bottom: 12px;
-    text-align: center;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-  }
+  .board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; max-width: 1100px; margin: 0 auto; }
+  .column { background: #232323; border-radius: 10px; padding: 15px; min-height: 400px; }
+  .column h2 { color: #39ff14; font-size: 1.1rem; margin-bottom: 12px; text-align: center; text-transform: uppercase; letter-spacing: 1px; }
   .column.drag-over { background: #2c3a2c; }
 
-  .card {
-    background: #2e2e2e;
-    border: 1px solid #444;
-    border-radius: 8px;
-    padding: 10px 12px;
-    margin-bottom: 10px;
-    cursor: grab;
-  }
+  .card { background: #2e2e2e; border: 1px solid #444; border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; cursor: pointer; }
   .card.dragging { opacity: 0.4; }
   .card h3 { font-size: 1rem; color: #fff; margin-bottom: 4px; }
   .card p.desc { font-size: 0.8rem; color: #aaa; margin-bottom: 4px; }
   .card .due { font-size: 0.75rem; color: #39ff14; }
   .card .meta-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
-  .card .label, .card .pillar-tag, .card .points-tag {
-    display: inline-block;
-    font-size: 0.7rem;
-    padding: 2px 8px;
-    border-radius: 10px;
+  .card .priority-tag, .card .pillar-tag, .card .points-tag {
+    display: inline-block; font-size: 0.7rem; padding: 2px 8px; border-radius: 10px;
   }
-  .label-priority { background: #5c1a1a; color: #ff8080; }
-  .label-idea { background: #1a3a5c; color: #80c0ff; }
-  .label-personal { background: #3a1a5c; color: #c080ff; }
-  .label-work { background: #1a5c2e; color: #80ffaa; }
+  .priority-1 { background: #5c1a1a; color: #ff6b6b; border: 1px solid #ff6b6b; }
+  .priority-2 { background: #5c3a1a; color: #ffa94d; border: 1px solid #ffa94d; }
+  .priority-3 { background: #1a3a5c; color: #74c0fc; border: 1px solid #74c0fc; }
   .pillar-tag { background: #333; color: #39ff14; border: 1px solid #39ff14; }
   .points-tag { background: #333; color: #ffd84d; border: 1px solid #ffd84d; }
 
   .card .comments-count { font-size: 0.7rem; color: #888; margin-top: 6px; }
-  .card .delete-btn {
-    float: right;
-    color: #888;
-    cursor: pointer;
-    font-size: 0.85rem;
-  }
+  .card .delete-btn { float: right; color: #888; cursor: pointer; font-size: 0.85rem; }
   .card .delete-btn:hover { color: #ff5050; }
 
   .add-card-btn {
-    width: 100%;
-    background: none;
-    border: 1px dashed #555;
-    color: #888;
-    padding: 8px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-family: inherit;
+    width: 100%; background: none; border: 1px dashed #555; color: #888;
+    padding: 8px; border-radius: 6px; cursor: pointer; font-family: inherit;
   }
   .add-card-btn:hover { border-color: #39ff14; color: #39ff14; }
 
-  /* Modal */
   .modal-overlay {
-    display: none;
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.6);
-    align-items: center;
-    justify-content: center;
+    display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.6); align-items: center; justify-content: center;
   }
   .modal-overlay.open { display: flex; }
   .modal {
-    background: #232323;
-    border: 1px solid #39ff14;
-    border-radius: 10px;
-    padding: 25px;
-    width: 90%;
-    max-width: 420px;
-    max-height: 90vh;
-    overflow-y: auto;
+    background: #232323; border: 1px solid #39ff14; border-radius: 10px;
+    padding: 25px; width: 90%; max-width: 420px; max-height: 90vh; overflow-y: auto;
   }
   .modal h2 { color: #39ff14; margin-bottom: 15px; }
   .modal label { font-size: 0.8rem; color: #aaa; display: block; margin-top: 10px; margin-bottom: 4px; }
   .modal input, .modal textarea, .modal select {
-    width: 100%;
-    background: #1a1a1a;
-    border: 1px solid #444;
-    color: #ddd;
-    padding: 8px;
-    border-radius: 6px;
-    font-family: inherit;
+    width: 100%; background: #1a1a1a; border: 1px solid #444; color: #ddd;
+    padding: 8px; border-radius: 6px; font-family: inherit;
   }
   .modal textarea { resize: vertical; min-height: 50px; }
-  .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
-  .modal-actions button {
-    padding: 8px 16px;
-    border-radius: 6px;
-    border: none;
-    cursor: pointer;
-    font-family: inherit;
-  }
+  .modal-actions { display: flex; justify-content: space-between; gap: 10px; margin-top: 18px; }
+  .modal-actions button { padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; font-family: inherit; }
   .btn-cancel { background: #444; color: #ddd; }
   .btn-save { background: #39ff14; color: #1a1a1a; font-weight: bold; }
+  .btn-delete-modal { background: #5c1a1a; color: #ff8080; }
 </style>
 </head>
 <body>
@@ -223,10 +120,9 @@
   </div>
 </div>
 
-<!-- Modal -->
 <div class="modal-overlay" id="modal-overlay">
   <div class="modal">
-    <h2>New Card</h2>
+    <h2 id="modal-title">New Card</h2>
     <label>Name</label>
     <input type="text" id="card-name" placeholder="Card title">
 
@@ -236,12 +132,11 @@
     <label>Due date</label>
     <input type="date" id="card-due">
 
-    <label>Label</label>
-    <select id="card-label">
-      <option value="priority">Priority</option>
-      <option value="idea">Idea</option>
-      <option value="personal">Personal</option>
-      <option value="work">Work</option>
+    <label>Priority</label>
+    <select id="card-priority">
+      <option value="1">1 - Urgent</option>
+      <option value="2">2 - Medium</option>
+      <option value="3">3 - Low</option>
     </select>
 
     <label>Pillar</label>
@@ -254,6 +149,8 @@
     <textarea id="card-comments" placeholder="Notes / comments..."></textarea>
 
     <div class="modal-actions">
+      <button class="btn-delete-modal" id="modal-delete-btn" onclick="deleteFromModal()" style="display:none;">Delete</button>
+      <div style="flex:1"></div>
       <button class="btn-cancel" onclick="closeModal()">Cancel</button>
       <button class="btn-save" onclick="saveCard()">Save</button>
     </div>
@@ -268,6 +165,7 @@
   };
   let cards = JSON.parse(localStorage.getItem('maxtrack-cards')) || [];
   let currentStatus = 'todo';
+  let editingCardId = null;
 
   function renderPillars() {
     const container = document.getElementById('pillars-container');
@@ -310,35 +208,63 @@
   }
 
   function openModal(status) {
+    editingCardId = null;
     currentStatus = status;
+    document.getElementById('modal-title').textContent = 'New Card';
+    document.getElementById('modal-delete-btn').style.display = 'none';
     document.getElementById('card-name').value = '';
     document.getElementById('card-desc').value = '';
     document.getElementById('card-due').value = '';
     document.getElementById('card-comments').value = '';
     document.getElementById('card-pillar').selectedIndex = 0;
     document.getElementById('card-points').selectedIndex = 0;
+    document.getElementById('card-priority').selectedIndex = 0;
+    document.getElementById('modal-overlay').classList.add('open');
+  }
+
+  function openEditModal(id) {
+    const card = cards.find(c => c.id === id);
+    if (!card) return;
+    editingCardId = id;
+    currentStatus = card.status;
+    document.getElementById('modal-title').textContent = 'Edit Card';
+    document.getElementById('modal-delete-btn').style.display = 'inline-block';
+    document.getElementById('card-name').value = card.name;
+    document.getElementById('card-desc').value = card.desc || '';
+    document.getElementById('card-due').value = card.due || '';
+    document.getElementById('card-comments').value = card.comments || '';
+    document.getElementById('card-pillar').value = card.pillar || PILLARS[0];
+    document.getElementById('card-points').value = card.points || '5';
+    document.getElementById('card-priority').value = card.priority || '1';
     document.getElementById('modal-overlay').classList.add('open');
   }
 
   function closeModal() {
     document.getElementById('modal-overlay').classList.remove('open');
+    editingCardId = null;
   }
 
   function saveCard() {
     const name = document.getElementById('card-name').value.trim();
     if (!name) { alert('Please enter a name'); return; }
-    const card = {
-      id: Date.now().toString(),
+
+    const data = {
       name,
       desc: document.getElementById('card-desc').value.trim(),
       due: document.getElementById('card-due').value,
-      label: document.getElementById('card-label').value,
+      priority: document.getElementById('card-priority').value,
       pillar: document.getElementById('card-pillar').value,
       points: document.getElementById('card-points').value,
       comments: document.getElementById('card-comments').value.trim(),
-      status: currentStatus
     };
-    cards.push(card);
+
+    if (editingCardId) {
+      const card = cards.find(c => c.id === editingCardId);
+      Object.assign(card, data);
+    } else {
+      cards.push({ id: Date.now().toString(), status: currentStatus, ...data });
+    }
+
     saveCardsToStorage();
     renderCards();
     closeModal();
@@ -349,6 +275,15 @@
     cards = cards.filter(c => c.id !== id);
     saveCardsToStorage();
     renderCards();
+  }
+
+  function deleteFromModal() {
+    if (editingCardId) {
+      cards = cards.filter(c => c.id !== editingCardId);
+      saveCardsToStorage();
+      renderCards();
+    }
+    closeModal();
   }
 
   function saveCardsToStorage() {
@@ -365,6 +300,8 @@
       el.className = 'card';
       el.draggable = true;
       el.dataset.id = card.id;
+      const priority = card.priority || '1';
+      const priorityLabels = { '1': 'P1 Urgent', '2': 'P2 Medium', '3': 'P3 Low' };
 
       el.innerHTML = `
         <span class="delete-btn" onclick="deleteCard('${card.id}', event)">✕</span>
@@ -372,13 +309,17 @@
         ${card.desc ? `<p class="desc">${escapeHtml(card.desc)}</p>` : ''}
         ${card.due ? `<div class="due">📅 ${card.due}</div>` : ''}
         <div class="meta-row">
-          <span class="label label-${card.label}">${card.label}</span>
+          <span class="priority-tag priority-${priority}">${priorityLabels[priority]}</span>
           ${card.pillar ? `<span class="pillar-tag">${card.pillar}</span>` : ''}
           ${card.points ? `<span class="points-tag">${card.points} pts</span>` : ''}
         </div>
         ${card.comments ? `<div class="comments-count">💬 ${escapeHtml(card.comments).slice(0, 40)}${card.comments.length > 40 ? '...' : ''}</div>` : ''}
       `;
 
+      el.addEventListener('click', (e) => {
+        if (e.target.classList.contains('delete-btn')) return;
+        openEditModal(card.id);
+      });
       el.addEventListener('dragstart', () => el.classList.add('dragging'));
       el.addEventListener('dragend', () => el.classList.remove('dragging'));
 
@@ -414,7 +355,6 @@
     });
   });
 
-  // Init
   populateSelects();
   renderPillars();
   renderCards();

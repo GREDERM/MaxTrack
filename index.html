@@ -26,13 +26,7 @@
   .score-value { font-size: 3rem; font-weight: bold; color: #39ff14; text-shadow: 0 0 8px #39ff14; }
   .score-label { font-size: 0.8rem; color: #888; text-transform: uppercase; letter-spacing: 2px; }
 
-  .pillars {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 14px;
-    max-width: 1100px;
-    margin: 0 auto 35px auto;
-  }
+  .pillars { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; max-width: 1100px; margin: 0 auto 35px auto; }
   .pillar-card { background: #232323; border: 1px solid #333; border-radius: 10px; padding: 14px 8px; text-align: center; }
   .pillar-card h3 { font-size: 0.8rem; color: #aaa; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
   .pillar-card .pillar-score { font-size: 1.6rem; font-weight: bold; color: #39ff14; margin-bottom: 8px; }
@@ -104,7 +98,6 @@
   .btn-save { background: #39ff14; color: #1a1a1a; font-weight: bold; }
   .btn-delete-modal { background: #5c1a1a; color: #ff8080; }
 
-  /* Responsive */
   @media (max-width: 700px) {
     h1 { font-size: 1.8rem; }
     .pillars { grid-template-columns: repeat(3, 1fr); }
@@ -214,13 +207,24 @@
 
   function changePillarScore(pillar, delta) {
     pillarScores[pillar] = Math.max(0, pillarScores[pillar] + delta);
-    localStorage.setItem('maxtrack-pillars', JSON.stringify(pillarScores));
+    savePillarsToStorage();
     renderPillars();
+  }
+
+  function savePillarsToStorage() {
+    localStorage.setItem('maxtrack-pillars', JSON.stringify(pillarScores));
   }
 
   function updateOverallScore() {
     const total = PILLARS.reduce((sum, p) => sum + pillarScores[p], 0);
     document.getElementById('score-value').textContent = total;
+  }
+
+  // Adds (or subtracts, if negative) points to a pillar safely
+  function adjustPillar(pillar, delta) {
+    if (!pillar || !(pillar in pillarScores)) return;
+    pillarScores[pillar] = Math.max(0, pillarScores[pillar] + delta);
+    savePillarsToStorage();
   }
 
   function populateSelects() {
@@ -286,34 +290,88 @@
 
     if (editingCardId) {
       const card = cards.find(c => c.id === editingCardId);
+
+      // If this card is currently "done" and scored, remove its old contribution first
+      if (card.status === 'done' && card.scored) {
+        adjustPillar(card.scoredPillar, -card.scoredPoints);
+      }
+
       Object.assign(card, data);
+
+      // Re-apply contribution with new pillar/points if still done
+      if (card.status === 'done') {
+        const pts = parseInt(card.points, 10) || 0;
+        adjustPillar(card.pillar, pts);
+        card.scored = true;
+        card.scoredPillar = card.pillar;
+        card.scoredPoints = pts;
+      } else {
+        card.scored = false;
+      }
     } else {
-      cards.push({ id: Date.now().toString(), status: currentStatus, ...data });
+      cards.push({ id: Date.now().toString(), status: currentStatus, scored: false, ...data });
     }
 
     saveCardsToStorage();
     renderCards();
+    renderPillars();
     closeModal();
   }
 
   function deleteCard(id, event) {
     event.stopPropagation();
+    const card = cards.find(c => c.id === id);
+    if (card && card.status === 'done' && card.scored) {
+      adjustPillar(card.scoredPillar, -card.scoredPoints);
+    }
     cards = cards.filter(c => c.id !== id);
     saveCardsToStorage();
     renderCards();
+    renderPillars();
   }
 
   function deleteFromModal() {
     if (editingCardId) {
+      const card = cards.find(c => c.id === editingCardId);
+      if (card && card.status === 'done' && card.scored) {
+        adjustPillar(card.scoredPillar, -card.scoredPoints);
+      }
       cards = cards.filter(c => c.id !== editingCardId);
       saveCardsToStorage();
       renderCards();
+      renderPillars();
     }
     closeModal();
   }
 
   function saveCardsToStorage() {
     localStorage.setItem('maxtrack-cards', JSON.stringify(cards));
+  }
+
+  // Central place that handles status changes + score adjustments
+  function setCardStatus(card, newStatus) {
+    const oldStatus = card.status;
+    if (oldStatus === newStatus) return;
+
+    // Leaving "done": remove its scored contribution
+    if (oldStatus === 'done' && card.scored) {
+      adjustPillar(card.scoredPillar, -card.scoredPoints);
+      card.scored = false;
+    }
+
+    card.status = newStatus;
+
+    // Entering "done": add its contribution
+    if (newStatus === 'done') {
+      const pts = parseInt(card.points, 10) || 0;
+      adjustPillar(card.pillar, pts);
+      card.scored = true;
+      card.scoredPillar = card.pillar;
+      card.scoredPoints = pts;
+    }
+
+    saveCardsToStorage();
+    renderPillars();
   }
 
   function moveCard(id, direction, event) {
@@ -323,8 +381,7 @@
     const idx = STATUSES.indexOf(card.status);
     const newIdx = idx + direction;
     if (newIdx < 0 || newIdx >= STATUSES.length) return;
-    card.status = STATUSES[newIdx];
-    saveCardsToStorage();
+    setCardStatus(card, STATUSES[newIdx]);
     renderCards();
   }
 
@@ -391,8 +448,7 @@
       const newStatus = column.dataset.status;
       const card = cards.find(c => c.id === id);
       if (card) {
-        card.status = newStatus;
-        saveCardsToStorage();
+        setCardStatus(card, newStatus);
         renderCards();
       }
     });

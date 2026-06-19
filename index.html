@@ -1,74 +1,342 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>MaxTrack</title>
-    <style>
-      * { margin: 0; padding: 0; box-sizing: border-box; }
-      body { font-family: sans-serif; background: #f5f5f5; color: #222; padding: 20px; }
-      h1 { text-align: center; margin-bottom: 30px; font-size: 2rem; }
-      .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
-      .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-      .card h2 { font-size: 1rem; margin-bottom: 10px; color: #555; }
-      .score { font-size: 2.5rem; font-weight: bold; color: #2a6496; }
-      .bar-bg { background: #eee; border-radius: 10px; height: 10px; margin-top: 10px; }
-      .bar { height: 10px; border-radius: 10px; background: #2a6496; transition: width 0.3s; }
-      input[type=range] { width: 100%; margin-top: 12px; accent-color: #2a6496; }
-      .save-btn { display: block; margin: 30px auto 0; padding: 12px 40px; background: #2a6496; color: white; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer; }
-      .save-btn:hover { background: #1e4f78; }
-    </style>
-  </head>
-  <body>
-    <h1>MaxTrack</h1>
-    <div class="grid">
-      <div class="card">
-        <h2>Mind</h2>
-        <div class="score" id="mind-score">7/10</div>
-        <div class="bar-bg"><div class="bar" id="mind-bar" style="width: 70%"></div></div>
-        <input type="range" min="0" max="10" value="7" oninput="update('mind', this.value)">
-      </div>
-      <div class="card">
-        <h2>Heart</h2>
-        <div class="score" id="heart-score">6/10</div>
-        <div class="bar-bg"><div class="bar" id="heart-bar" style="width: 60%"></div></div>
-        <input type="range" min="0" max="10" value="6" oninput="update('heart', this.value)">
-      </div>
-      <div class="card">
-        <h2>Energy</h2>
-        <div class="score" id="energy-score">8/10</div>
-        <div class="bar-bg"><div class="bar" id="energy-bar" style="width: 80%"></div></div>
-        <input type="range" min="0" max="10" value="8" oninput="update('energy', this.value)">
-      </div>
-      <div class="card">
-        <h2>Presence</h2>
-        <div class="score" id="presence-score">5/10</div>
-        <div class="bar-bg"><div class="bar" id="presence-bar" style="width: 50%"></div></div>
-        <input type="range" min="0" max="10" value="5" oninput="update('presence', this.value)">
-      </div>
-      <div class="card">
-        <h2>Drive</h2>
-        <div class="score" id="drive-score">9/10</div>
-        <div class="bar-bg"><div class="bar" id="drive-bar" style="width: 90%"></div></div>
-        <input type="range" min="0" max="10" value="9" oninput="update('drive', this.value)">
-      </div>
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MaxTrack</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Courier New', monospace;
+    background: #1a1a1a;
+    color: #ddd;
+    padding: 20px;
+    min-height: 100vh;
+  }
+  h1 {
+    text-align: center;
+    font-size: 2.5rem;
+    color: #39ff14;
+    text-shadow: 0 0 10px #39ff14, 0 0 20px #39ff14;
+    letter-spacing: 4px;
+    margin-bottom: 25px;
+  }
+
+  /* Score panel */
+  .score-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 35px;
+  }
+  .score-value {
+    font-size: 3rem;
+    font-weight: bold;
+    color: #39ff14;
+    text-shadow: 0 0 8px #39ff14;
+  }
+  .score-buttons { display: flex; gap: 10px; margin-top: 12px; }
+  .score-buttons button {
+    background: #2a2a2a;
+    border: 1px solid #39ff14;
+    color: #39ff14;
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.9rem;
+    transition: background 0.2s;
+  }
+  .score-buttons button:hover { background: #39ff14; color: #1a1a1a; }
+
+  /* Board */
+  .board {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  .column {
+    background: #232323;
+    border-radius: 10px;
+    padding: 15px;
+    min-height: 400px;
+  }
+  .column h2 {
+    color: #39ff14;
+    font-size: 1.1rem;
+    margin-bottom: 12px;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .column.drag-over { background: #2c3a2c; }
+
+  .card {
+    background: #2e2e2e;
+    border: 1px solid #444;
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+    cursor: grab;
+  }
+  .card.dragging { opacity: 0.4; }
+  .card h3 { font-size: 1rem; color: #fff; margin-bottom: 4px; }
+  .card p.desc { font-size: 0.8rem; color: #aaa; margin-bottom: 4px; }
+  .card .due { font-size: 0.75rem; color: #39ff14; }
+  .card .label {
+    display: inline-block;
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-top: 6px;
+    margin-right: 4px;
+  }
+  .label-priority { background: #5c1a1a; color: #ff8080; }
+  .label-idea { background: #1a3a5c; color: #80c0ff; }
+  .label-personal { background: #3a1a5c; color: #c080ff; }
+  .label-work { background: #1a5c2e; color: #80ffaa; }
+
+  .card .comments-count { font-size: 0.7rem; color: #888; margin-top: 6px; }
+  .card .delete-btn {
+    float: right;
+    color: #888;
+    cursor: pointer;
+    font-size: 0.85rem;
+  }
+  .card .delete-btn:hover { color: #ff5050; }
+
+  .add-card-btn {
+    width: 100%;
+    background: none;
+    border: 1px dashed #555;
+    color: #888;
+    padding: 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .add-card-btn:hover { border-color: #39ff14; color: #39ff14; }
+
+  /* Modal */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.6);
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: #232323;
+    border: 1px solid #39ff14;
+    border-radius: 10px;
+    padding: 25px;
+    width: 90%;
+    max-width: 420px;
+  }
+  .modal h2 { color: #39ff14; margin-bottom: 15px; }
+  .modal label { font-size: 0.8rem; color: #aaa; display: block; margin-top: 10px; margin-bottom: 4px; }
+  .modal input, .modal textarea, .modal select {
+    width: 100%;
+    background: #1a1a1a;
+    border: 1px solid #444;
+    color: #ddd;
+    padding: 8px;
+    border-radius: 6px;
+    font-family: inherit;
+  }
+  .modal textarea { resize: vertical; min-height: 50px; }
+  .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
+  .modal-actions button {
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .btn-cancel { background: #444; color: #ddd; }
+  .btn-save { background: #39ff14; color: #1a1a1a; font-weight: bold; }
+</style>
+</head>
+<body>
+
+<h1>MAXTRACK</h1>
+
+<div class="score-panel">
+  <div class="score-value" id="score-value">50</div>
+  <div class="score-buttons">
+    <button onclick="changeScore(-10)">-10</button>
+    <button onclick="changeScore(-5)">-5</button>
+    <button onclick="changeScore(5)">+5</button>
+    <button onclick="changeScore(10)">+10</button>
+  </div>
+</div>
+
+<div class="board">
+  <div class="column" data-status="todo">
+    <h2>To Do</h2>
+    <div class="cards-container" id="todo-container"></div>
+    <button class="add-card-btn" onclick="openModal('todo')">+ Add card</button>
+  </div>
+  <div class="column" data-status="inprogress">
+    <h2>In Progress</h2>
+    <div class="cards-container" id="inprogress-container"></div>
+    <button class="add-card-btn" onclick="openModal('inprogress')">+ Add card</button>
+  </div>
+  <div class="column" data-status="done">
+    <h2>Done</h2>
+    <div class="cards-container" id="done-container"></div>
+    <button class="add-card-btn" onclick="openModal('done')">+ Add card</button>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <h2>New Card</h2>
+    <label>Name</label>
+    <input type="text" id="card-name" placeholder="Card title">
+
+    <label>Description</label>
+    <textarea id="card-desc" placeholder="Details about this goal..."></textarea>
+
+    <label>Due date</label>
+    <input type="date" id="card-due">
+
+    <label>Label</label>
+    <select id="card-label">
+      <option value="priority">Priority</option>
+      <option value="idea">Idea</option>
+      <option value="personal">Personal</option>
+      <option value="work">Work</option>
+    </select>
+
+    <label>Comments</label>
+    <textarea id="card-comments" placeholder="Notes / comments..."></textarea>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-save" onclick="saveCard()">Save</button>
     </div>
-    <button class="save-btn" onclick="saveWeek()">Save this week</button>
+  </div>
+</div>
 
-    <script>
-      function update(pillar, value) {
-        document.getElementById(pillar + '-score').textContent = value + '/10';
-        document.getElementById(pillar + '-bar').style.width = (value * 10) + '%';
+<script>
+  let score = parseInt(localStorage.getItem('maxtrack-score')) || 50;
+  let cards = JSON.parse(localStorage.getItem('maxtrack-cards')) || [];
+  let currentStatus = 'todo';
+
+  function changeScore(delta) {
+    score = Math.max(0, Math.min(100, score + delta));
+    document.getElementById('score-value').textContent = score;
+    localStorage.setItem('maxtrack-score', score);
+  }
+
+  function openModal(status) {
+    currentStatus = status;
+    document.getElementById('card-name').value = '';
+    document.getElementById('card-desc').value = '';
+    document.getElementById('card-due').value = '';
+    document.getElementById('card-comments').value = '';
+    document.getElementById('modal-overlay').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('modal-overlay').classList.remove('open');
+  }
+
+  function saveCard() {
+    const name = document.getElementById('card-name').value.trim();
+    if (!name) { alert('Please enter a name'); return; }
+    const card = {
+      id: Date.now().toString(),
+      name,
+      desc: document.getElementById('card-desc').value.trim(),
+      due: document.getElementById('card-due').value,
+      label: document.getElementById('card-label').value,
+      comments: document.getElementById('card-comments').value.trim(),
+      status: currentStatus
+    };
+    cards.push(card);
+    saveCardsToStorage();
+    renderCards();
+    closeModal();
+  }
+
+  function deleteCard(id, event) {
+    event.stopPropagation();
+    cards = cards.filter(c => c.id !== id);
+    saveCardsToStorage();
+    renderCards();
+  }
+
+  function saveCardsToStorage() {
+    localStorage.setItem('maxtrack-cards', JSON.stringify(cards));
+  }
+
+  function renderCards() {
+    ['todo', 'inprogress', 'done'].forEach(status => {
+      document.getElementById(status + '-container').innerHTML = '';
+    });
+
+    cards.forEach(card => {
+      const el = document.createElement('div');
+      el.className = 'card';
+      el.draggable = true;
+      el.dataset.id = card.id;
+
+      el.innerHTML = `
+        <span class="delete-btn" onclick="deleteCard('${card.id}', event)">✕</span>
+        <h3>${escapeHtml(card.name)}</h3>
+        ${card.desc ? `<p class="desc">${escapeHtml(card.desc)}</p>` : ''}
+        ${card.due ? `<div class="due">📅 ${card.due}</div>` : ''}
+        <span class="label label-${card.label}">${card.label}</span>
+        ${card.comments ? `<div class="comments-count">💬 ${escapeHtml(card.comments).slice(0, 40)}${card.comments.length > 40 ? '...' : ''}</div>` : ''}
+      `;
+
+      el.addEventListener('dragstart', () => el.classList.add('dragging'));
+      el.addEventListener('dragend', () => el.classList.remove('dragging'));
+
+      document.getElementById(card.status + '-container').appendChild(el);
+    });
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  // Drag and drop on columns
+  document.querySelectorAll('.column').forEach(column => {
+    column.addEventListener('dragover', e => {
+      e.preventDefault();
+      column.classList.add('drag-over');
+    });
+    column.addEventListener('dragleave', () => column.classList.remove('drag-over'));
+    column.addEventListener('drop', e => {
+      e.preventDefault();
+      column.classList.remove('drag-over');
+      const dragging = document.querySelector('.dragging');
+      if (!dragging) return;
+      const id = dragging.dataset.id;
+      const newStatus = column.dataset.status;
+      const card = cards.find(c => c.id === id);
+      if (card) {
+        card.status = newStatus;
+        saveCardsToStorage();
+        renderCards();
       }
+    });
+  });
 
-      function saveWeek() {
-        const week = {
-          date: new Date().toLocaleDateString(),
-          mind: document.getElementById('mind-bar').style.width,
-          heart: document.getElementById('heart-bar').style.width,
-          energy: document.getElementById('energy-bar').style.width,
-          presence: document.getElementById('presence-bar').style.width,
-          drive: document.getElementById('drive-bar').style.width,
-        };
-        console.log('Week saved:', week);
-        alert('Week saved! (check console
+  // Init
+  document.getElementById('score-value').textContent = score;
+  renderCards();
+</script>
+
+</body>
+</html>

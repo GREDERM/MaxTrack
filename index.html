@@ -22,12 +22,12 @@
     margin-bottom: 25px;
   }
 
-  /* Score panel */
+  /* Overall score */
   .score-panel {
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin-bottom: 35px;
+    margin-bottom: 25px;
   }
   .score-value {
     font-size: 3rem;
@@ -35,19 +35,49 @@
     color: #39ff14;
     text-shadow: 0 0 8px #39ff14;
   }
-  .score-buttons { display: flex; gap: 10px; margin-top: 12px; }
-  .score-buttons button {
+  .score-label { font-size: 0.8rem; color: #888; text-transform: uppercase; letter-spacing: 2px; }
+
+  /* Pillars row */
+  .pillars {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 14px;
+    max-width: 1100px;
+    margin: 0 auto 35px auto;
+  }
+  .pillar-card {
+    background: #232323;
+    border: 1px solid #333;
+    border-radius: 10px;
+    padding: 14px 8px;
+    text-align: center;
+  }
+  .pillar-card h3 {
+    font-size: 0.8rem;
+    color: #aaa;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+  }
+  .pillar-card .pillar-score {
+    font-size: 1.6rem;
+    font-weight: bold;
+    color: #39ff14;
+    margin-bottom: 8px;
+  }
+  .pillar-buttons { display: flex; justify-content: center; gap: 8px; }
+  .pillar-buttons button {
     background: #2a2a2a;
     border: 1px solid #39ff14;
     color: #39ff14;
-    padding: 8px 14px;
+    padding: 5px 10px;
     border-radius: 6px;
     cursor: pointer;
     font-family: inherit;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     transition: background 0.2s;
   }
-  .score-buttons button:hover { background: #39ff14; color: #1a1a1a; }
+  .pillar-buttons button:hover { background: #39ff14; color: #1a1a1a; }
 
   /* Board */
   .board {
@@ -85,18 +115,19 @@
   .card h3 { font-size: 1rem; color: #fff; margin-bottom: 4px; }
   .card p.desc { font-size: 0.8rem; color: #aaa; margin-bottom: 4px; }
   .card .due { font-size: 0.75rem; color: #39ff14; }
-  .card .label {
+  .card .meta-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  .card .label, .card .pillar-tag, .card .points-tag {
     display: inline-block;
     font-size: 0.7rem;
     padding: 2px 8px;
     border-radius: 10px;
-    margin-top: 6px;
-    margin-right: 4px;
   }
   .label-priority { background: #5c1a1a; color: #ff8080; }
   .label-idea { background: #1a3a5c; color: #80c0ff; }
   .label-personal { background: #3a1a5c; color: #c080ff; }
   .label-work { background: #1a5c2e; color: #80ffaa; }
+  .pillar-tag { background: #333; color: #39ff14; border: 1px solid #39ff14; }
+  .points-tag { background: #333; color: #ffd84d; border: 1px solid #ffd84d; }
 
   .card .comments-count { font-size: 0.7rem; color: #888; margin-top: 6px; }
   .card .delete-btn {
@@ -136,6 +167,8 @@
     padding: 25px;
     width: 90%;
     max-width: 420px;
+    max-height: 90vh;
+    overflow-y: auto;
   }
   .modal h2 { color: #39ff14; margin-bottom: 15px; }
   .modal label { font-size: 0.8rem; color: #aaa; display: block; margin-top: 10px; margin-bottom: 4px; }
@@ -166,14 +199,11 @@
 <h1>MAXTRACK</h1>
 
 <div class="score-panel">
-  <div class="score-value" id="score-value">50</div>
-  <div class="score-buttons">
-    <button onclick="changeScore(-10)">-10</button>
-    <button onclick="changeScore(-5)">-5</button>
-    <button onclick="changeScore(5)">+5</button>
-    <button onclick="changeScore(10)">+10</button>
-  </div>
+  <div class="score-value" id="score-value">0</div>
+  <div class="score-label">Overall score</div>
 </div>
+
+<div class="pillars" id="pillars-container"></div>
 
 <div class="board">
   <div class="column" data-status="todo">
@@ -214,6 +244,12 @@
       <option value="work">Work</option>
     </select>
 
+    <label>Pillar</label>
+    <select id="card-pillar"></select>
+
+    <label>Points</label>
+    <select id="card-points"></select>
+
     <label>Comments</label>
     <textarea id="card-comments" placeholder="Notes / comments..."></textarea>
 
@@ -225,14 +261,52 @@
 </div>
 
 <script>
-  let score = parseInt(localStorage.getItem('maxtrack-score')) || 50;
+  const PILLARS = ['Self Discipline', 'Learning', 'Working', 'Sport', 'Social'];
+
+  let pillarScores = JSON.parse(localStorage.getItem('maxtrack-pillars')) || {
+    'Self Discipline': 0, 'Learning': 0, 'Working': 0, 'Sport': 0, 'Social': 0
+  };
   let cards = JSON.parse(localStorage.getItem('maxtrack-cards')) || [];
   let currentStatus = 'todo';
 
-  function changeScore(delta) {
-    score = Math.max(0, Math.min(100, score + delta));
-    document.getElementById('score-value').textContent = score;
-    localStorage.setItem('maxtrack-score', score);
+  function renderPillars() {
+    const container = document.getElementById('pillars-container');
+    container.innerHTML = '';
+    PILLARS.forEach(pillar => {
+      const div = document.createElement('div');
+      div.className = 'pillar-card';
+      div.innerHTML = `
+        <h3>${pillar}</h3>
+        <div class="pillar-score">${pillarScores[pillar]}</div>
+        <div class="pillar-buttons">
+          <button onclick="changePillarScore('${pillar}', -5)">-5</button>
+          <button onclick="changePillarScore('${pillar}', 5)">+5</button>
+        </div>
+      `;
+      container.appendChild(div);
+    });
+    updateOverallScore();
+  }
+
+  function changePillarScore(pillar, delta) {
+    pillarScores[pillar] = Math.max(0, pillarScores[pillar] + delta);
+    localStorage.setItem('maxtrack-pillars', JSON.stringify(pillarScores));
+    renderPillars();
+  }
+
+  function updateOverallScore() {
+    const total = PILLARS.reduce((sum, p) => sum + pillarScores[p], 0);
+    document.getElementById('score-value').textContent = total;
+  }
+
+  function populateSelects() {
+    const pillarSelect = document.getElementById('card-pillar');
+    pillarSelect.innerHTML = PILLARS.map(p => `<option value="${p}">${p}</option>`).join('');
+
+    const pointsSelect = document.getElementById('card-points');
+    let opts = '';
+    for (let i = 5; i <= 50; i += 5) opts += `<option value="${i}">${i}</option>`;
+    pointsSelect.innerHTML = opts;
   }
 
   function openModal(status) {
@@ -241,6 +315,8 @@
     document.getElementById('card-desc').value = '';
     document.getElementById('card-due').value = '';
     document.getElementById('card-comments').value = '';
+    document.getElementById('card-pillar').selectedIndex = 0;
+    document.getElementById('card-points').selectedIndex = 0;
     document.getElementById('modal-overlay').classList.add('open');
   }
 
@@ -257,6 +333,8 @@
       desc: document.getElementById('card-desc').value.trim(),
       due: document.getElementById('card-due').value,
       label: document.getElementById('card-label').value,
+      pillar: document.getElementById('card-pillar').value,
+      points: document.getElementById('card-points').value,
       comments: document.getElementById('card-comments').value.trim(),
       status: currentStatus
     };
@@ -293,7 +371,11 @@
         <h3>${escapeHtml(card.name)}</h3>
         ${card.desc ? `<p class="desc">${escapeHtml(card.desc)}</p>` : ''}
         ${card.due ? `<div class="due">📅 ${card.due}</div>` : ''}
-        <span class="label label-${card.label}">${card.label}</span>
+        <div class="meta-row">
+          <span class="label label-${card.label}">${card.label}</span>
+          ${card.pillar ? `<span class="pillar-tag">${card.pillar}</span>` : ''}
+          ${card.points ? `<span class="points-tag">${card.points} pts</span>` : ''}
+        </div>
         ${card.comments ? `<div class="comments-count">💬 ${escapeHtml(card.comments).slice(0, 40)}${card.comments.length > 40 ? '...' : ''}</div>` : ''}
       `;
 
@@ -310,7 +392,6 @@
     return div.innerHTML;
   }
 
-  // Drag and drop on columns
   document.querySelectorAll('.column').forEach(column => {
     column.addEventListener('dragover', e => {
       e.preventDefault();
@@ -334,7 +415,8 @@
   });
 
   // Init
-  document.getElementById('score-value').textContent = score;
+  populateSelects();
+  renderPillars();
   renderCards();
 </script>
 

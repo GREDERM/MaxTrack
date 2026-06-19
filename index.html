@@ -26,7 +26,13 @@
   .score-value { font-size: 3rem; font-weight: bold; color: #39ff14; text-shadow: 0 0 8px #39ff14; }
   .score-label { font-size: 0.8rem; color: #888; text-transform: uppercase; letter-spacing: 2px; }
 
-  .pillars { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; max-width: 1100px; margin: 0 auto 35px auto; }
+  .pillars {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 14px;
+    max-width: 1100px;
+    margin: 0 auto 35px auto;
+  }
   .pillar-card { background: #232323; border: 1px solid #333; border-radius: 10px; padding: 14px 8px; text-align: center; }
   .pillar-card h3 { font-size: 0.8rem; color: #aaa; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
   .pillar-card .pillar-score { font-size: 1.6rem; font-weight: bold; color: #39ff14; margin-bottom: 8px; }
@@ -62,6 +68,14 @@
   .card .delete-btn { float: right; color: #888; cursor: pointer; font-size: 0.85rem; }
   .card .delete-btn:hover { color: #ff5050; }
 
+  .card-move-row { display: flex; justify-content: space-between; margin-top: 8px; }
+  .move-btn {
+    background: #1a1a1a; border: 1px solid #555; color: #39ff14;
+    padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 0.9rem;
+  }
+  .move-btn:disabled { opacity: 0.25; cursor: default; }
+  .move-btn:hover:not(:disabled) { background: #39ff14; color: #1a1a1a; }
+
   .add-card-btn {
     width: 100%; background: none; border: 1px dashed #555; color: #888;
     padding: 8px; border-radius: 6px; cursor: pointer; font-family: inherit;
@@ -89,6 +103,17 @@
   .btn-cancel { background: #444; color: #ddd; }
   .btn-save { background: #39ff14; color: #1a1a1a; font-weight: bold; }
   .btn-delete-modal { background: #5c1a1a; color: #ff8080; }
+
+  /* Responsive */
+  @media (max-width: 700px) {
+    h1 { font-size: 1.8rem; }
+    .pillars { grid-template-columns: repeat(3, 1fr); }
+    .pillar-card { padding: 10px 6px; }
+    .pillar-card h3 { font-size: 0.65rem; }
+    .pillar-card .pillar-score { font-size: 1.3rem; }
+    .pillar-buttons button { padding: 4px 8px; font-size: 0.75rem; }
+    .board { grid-template-columns: 1fr; }
+  }
 </style>
 </head>
 <body>
@@ -159,6 +184,7 @@
 
 <script>
   const PILLARS = ['Self Discipline', 'Learning', 'Working', 'Sport', 'Social'];
+  const STATUSES = ['todo', 'inprogress', 'done'];
 
   let pillarScores = JSON.parse(localStorage.getItem('maxtrack-pillars')) || {
     'Self Discipline': 0, 'Learning': 0, 'Working': 0, 'Sport': 0, 'Social': 0
@@ -290,8 +316,20 @@
     localStorage.setItem('maxtrack-cards', JSON.stringify(cards));
   }
 
+  function moveCard(id, direction, event) {
+    event.stopPropagation();
+    const card = cards.find(c => c.id === id);
+    if (!card) return;
+    const idx = STATUSES.indexOf(card.status);
+    const newIdx = idx + direction;
+    if (newIdx < 0 || newIdx >= STATUSES.length) return;
+    card.status = STATUSES[newIdx];
+    saveCardsToStorage();
+    renderCards();
+  }
+
   function renderCards() {
-    ['todo', 'inprogress', 'done'].forEach(status => {
+    STATUSES.forEach(status => {
       document.getElementById(status + '-container').innerHTML = '';
     });
 
@@ -302,6 +340,7 @@
       el.dataset.id = card.id;
       const priority = card.priority || '1';
       const priorityLabels = { '1': 'P1 Urgent', '2': 'P2 Medium', '3': 'P3 Low' };
+      const idx = STATUSES.indexOf(card.status);
 
       el.innerHTML = `
         <span class="delete-btn" onclick="deleteCard('${card.id}', event)">✕</span>
@@ -314,10 +353,14 @@
           ${card.points ? `<span class="points-tag">${card.points} pts</span>` : ''}
         </div>
         ${card.comments ? `<div class="comments-count">💬 ${escapeHtml(card.comments).slice(0, 40)}${card.comments.length > 40 ? '...' : ''}</div>` : ''}
+        <div class="card-move-row">
+          <button class="move-btn" onclick="moveCard('${card.id}', -1, event)" ${idx === 0 ? 'disabled' : ''}>← Back</button>
+          <button class="move-btn" onclick="moveCard('${card.id}', 1, event)" ${idx === STATUSES.length - 1 ? 'disabled' : ''}>Next →</button>
+        </div>
       `;
 
       el.addEventListener('click', (e) => {
-        if (e.target.classList.contains('delete-btn')) return;
+        if (e.target.classList.contains('delete-btn') || e.target.classList.contains('move-btn')) return;
         openEditModal(card.id);
       });
       el.addEventListener('dragstart', () => el.classList.add('dragging'));

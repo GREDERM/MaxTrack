@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Maximum</title>
+<title>MaxTrack</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
@@ -19,8 +19,49 @@
     color: #39ff14;
     text-shadow: 0 0 10px #39ff14, 0 0 20px #39ff14;
     letter-spacing: 4px;
-    margin-bottom: 25px;
+    margin-bottom: 10px;
   }
+
+  /* Login screen */
+  #login-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 70vh;
+    gap: 20px;
+  }
+  #login-screen p { color: #888; }
+  .google-btn {
+    background: #232323;
+    border: 1px solid #39ff14;
+    color: #39ff14;
+    padding: 12px 28px;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+  .google-btn:hover { background: #39ff14; color: #1a1a1a; }
+
+  /* Top bar with user info */
+  #user-bar {
+    display: none;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    font-size: 0.8rem;
+    color: #888;
+  }
+  #user-bar img { width: 28px; height: 28px; border-radius: 50%; border: 1px solid #39ff14; }
+  #logout-btn {
+    background: none; border: 1px solid #555; color: #aaa;
+    padding: 4px 10px; border-radius: 6px; cursor: pointer; font-family: inherit; font-size: 0.75rem;
+  }
+  #logout-btn:hover { border-color: #ff5050; color: #ff5050; }
+
+  #app-content { display: none; }
 
   .score-panel { display: flex; flex-direction: column; align-items: center; margin-bottom: 25px; }
   .score-value { font-size: 3rem; font-weight: bold; color: #39ff14; text-shadow: 0 0 8px #39ff14; }
@@ -98,6 +139,10 @@
   .btn-save { background: #39ff14; color: #1a1a1a; font-weight: bold; }
   .btn-delete-modal { background: #5c1a1a; color: #ff8080; }
 
+  #sync-indicator {
+    text-align: center; font-size: 0.7rem; color: #555; margin-top: 30px;
+  }
+
   @media (max-width: 700px) {
     h1 { font-size: 1.8rem; }
     .pillars { grid-template-columns: repeat(3, 1fr); }
@@ -111,31 +156,46 @@
 </head>
 <body>
 
-<h1>MAXIMUM</h1>
+<h1>MAXTRACK</h1>
 
-<div class="score-panel">
-  <div class="score-value" id="score-value">0</div>
-  <div class="score-label">Overall score</div>
+<div id="login-screen">
+  <p>Sign in to sync your data across devices</p>
+  <button class="google-btn" onclick="loginWithGoogle()">Sign in with Google</button>
 </div>
 
-<div class="pillars" id="pillars-container"></div>
+<div id="user-bar">
+  <img id="user-photo" src="" alt="">
+  <span id="user-name"></span>
+  <button id="logout-btn" onclick="logout()">Log out</button>
+</div>
 
-<div class="board">
-  <div class="column" data-status="todo">
-    <h2>To Do</h2>
-    <div class="cards-container" id="todo-container"></div>
-    <button class="add-card-btn" onclick="openModal('todo')">+ Add card</button>
+<div id="app-content">
+  <div class="score-panel">
+    <div class="score-value" id="score-value">0</div>
+    <div class="score-label">Overall score</div>
   </div>
-  <div class="column" data-status="inprogress">
-    <h2>In Progress</h2>
-    <div class="cards-container" id="inprogress-container"></div>
-    <button class="add-card-btn" onclick="openModal('inprogress')">+ Add card</button>
+
+  <div class="pillars" id="pillars-container"></div>
+
+  <div class="board">
+    <div class="column" data-status="todo">
+      <h2>To Do</h2>
+      <div class="cards-container" id="todo-container"></div>
+      <button class="add-card-btn" onclick="openModal('todo')">+ Add card</button>
+    </div>
+    <div class="column" data-status="inprogress">
+      <h2>In Progress</h2>
+      <div class="cards-container" id="inprogress-container"></div>
+      <button class="add-card-btn" onclick="openModal('inprogress')">+ Add card</button>
+    </div>
+    <div class="column" data-status="done">
+      <h2>Done</h2>
+      <div class="cards-container" id="done-container"></div>
+      <button class="add-card-btn" onclick="openModal('done')">+ Add card</button>
+    </div>
   </div>
-  <div class="column" data-status="done">
-    <h2>Done</h2>
-    <div class="cards-container" id="done-container"></div>
-    <button class="add-card-btn" onclick="openModal('done')">+ Add card</button>
-  </div>
+
+  <div id="sync-indicator">Synced</div>
 </div>
 
 <div class="modal-overlay" id="modal-overlay">
@@ -175,16 +235,110 @@
   </div>
 </div>
 
-<script>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import {
+    getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import {
+    getFirestore, doc, getDoc, setDoc
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCmDvi6r4lYfKcrJZjZcCCnJJo7TIj9LBk",
+    authDomain: "maxtrack-3cbbe.firebaseapp.com",
+    projectId: "maxtrack-3cbbe",
+    storageBucket: "maxtrack-3cbbe.firebasestorage.app",
+    messagingSenderId: "407490889849",
+    appId: "1:407490889849:web:6f8c21aceb0c500697aca8"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const provider = new GoogleAuthProvider();
+
   const PILLARS = ['Self Discipline', 'Learning', 'Working', 'Sport', 'Social'];
   const STATUSES = ['todo', 'inprogress', 'done'];
 
-  let pillarScores = JSON.parse(localStorage.getItem('maxtrack-pillars')) || {
-    'Self Discipline': 0, 'Learning': 0, 'Working': 0, 'Sport': 0, 'Social': 0
-  };
-  let cards = JSON.parse(localStorage.getItem('maxtrack-cards')) || [];
+  let pillarScores = {};
+  let cards = [];
   let currentStatus = 'todo';
   let editingCardId = null;
+  let currentUser = null;
+  let saveTimeout = null;
+
+  window.loginWithGoogle = function () {
+    signInWithPopup(auth, provider).catch(err => alert("Login failed: " + err.message));
+  };
+
+  window.logout = function () {
+    signOut(auth);
+  };
+
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      currentUser = user;
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('user-bar').style.display = 'flex';
+      document.getElementById('app-content').style.display = 'block';
+      document.getElementById('user-photo').src = user.photoURL || '';
+      document.getElementById('user-name').textContent = user.displayName || user.email;
+
+      await loadUserData();
+      populateSelects();
+      renderPillars();
+      renderCards();
+    } else {
+      currentUser = null;
+      document.getElementById('login-screen').style.display = 'flex';
+      document.getElementById('user-bar').style.display = 'none';
+      document.getElementById('app-content').style.display = 'none';
+    }
+  });
+
+  async function loadUserData() {
+    const ref = doc(db, "users", currentUser.uid);
+    const snap = await getDoc(ref);
+    if (snap.exists()) {
+      const data = snap.data();
+      pillarScores = data.pillarScores || defaultPillars();
+      cards = data.cards || [];
+    } else {
+      pillarScores = defaultPillars();
+      cards = [];
+      await persistData();
+    }
+  }
+
+  function defaultPillars() {
+    return PILLARS.reduce((acc, p) => { acc[p] = 0; return acc; }, {});
+  }
+
+  async function persistData() {
+    if (!currentUser) return;
+    document.getElementById('sync-indicator').textContent = 'Syncing...';
+    const ref = doc(db, "users", currentUser.uid);
+    await setDoc(ref, { pillarScores, cards });
+    document.getElementById('sync-indicator').textContent = 'Synced';
+  }
+
+  function scheduleSave() {
+    clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(persistData, 400);
+  }
+
+  // ----- Pillars -----
+  window.changePillarScore = function (pillar, delta) {
+    pillarScores[pillar] = Math.max(0, pillarScores[pillar] + delta);
+    scheduleSave();
+    renderPillars();
+  };
+
+  function adjustPillar(pillar, delta) {
+    if (!pillar || !(pillar in pillarScores)) return;
+    pillarScores[pillar] = Math.max(0, pillarScores[pillar] + delta);
+  }
 
   function renderPillars() {
     const container = document.getElementById('pillars-container');
@@ -205,39 +359,22 @@
     updateOverallScore();
   }
 
-  function changePillarScore(pillar, delta) {
-    pillarScores[pillar] = Math.max(0, pillarScores[pillar] + delta);
-    savePillarsToStorage();
-    renderPillars();
-  }
-
-  function savePillarsToStorage() {
-    localStorage.setItem('maxtrack-pillars', JSON.stringify(pillarScores));
-  }
-
   function updateOverallScore() {
     const total = PILLARS.reduce((sum, p) => sum + pillarScores[p], 0);
     document.getElementById('score-value').textContent = total;
   }
 
-  // Adds (or subtracts, if negative) points to a pillar safely
-  function adjustPillar(pillar, delta) {
-    if (!pillar || !(pillar in pillarScores)) return;
-    pillarScores[pillar] = Math.max(0, pillarScores[pillar] + delta);
-    savePillarsToStorage();
-  }
-
   function populateSelects() {
     const pillarSelect = document.getElementById('card-pillar');
     pillarSelect.innerHTML = PILLARS.map(p => `<option value="${p}">${p}</option>`).join('');
-
     const pointsSelect = document.getElementById('card-points');
     let opts = '';
     for (let i = 5; i <= 50; i += 5) opts += `<option value="${i}">${i}</option>`;
     pointsSelect.innerHTML = opts;
   }
 
-  function openModal(status) {
+  // ----- Modal -----
+  window.openModal = function (status) {
     editingCardId = null;
     currentStatus = status;
     document.getElementById('modal-title').textContent = 'New Card';
@@ -250,7 +387,7 @@
     document.getElementById('card-points').selectedIndex = 0;
     document.getElementById('card-priority').selectedIndex = 0;
     document.getElementById('modal-overlay').classList.add('open');
-  }
+  };
 
   function openEditModal(id) {
     const card = cards.find(c => c.id === id);
@@ -269,12 +406,12 @@
     document.getElementById('modal-overlay').classList.add('open');
   }
 
-  function closeModal() {
+  window.closeModal = function () {
     document.getElementById('modal-overlay').classList.remove('open');
     editingCardId = null;
-  }
+  };
 
-  function saveCard() {
+  window.saveCard = function () {
     const name = document.getElementById('card-name').value.trim();
     if (!name) { alert('Please enter a name'); return; }
 
@@ -290,15 +427,10 @@
 
     if (editingCardId) {
       const card = cards.find(c => c.id === editingCardId);
-
-      // If this card is currently "done" and scored, remove its old contribution first
       if (card.status === 'done' && card.scored) {
         adjustPillar(card.scoredPillar, -card.scoredPoints);
       }
-
       Object.assign(card, data);
-
-      // Re-apply contribution with new pillar/points if still done
       if (card.status === 'done') {
         const pts = parseInt(card.points, 10) || 0;
         adjustPillar(card.pillar, pts);
@@ -312,48 +444,42 @@
       cards.push({ id: Date.now().toString(), status: currentStatus, scored: false, ...data });
     }
 
-    saveCardsToStorage();
+    scheduleSave();
     renderCards();
     renderPillars();
     closeModal();
-  }
+  };
 
-  function deleteCard(id, event) {
+  window.deleteCard = function (id, event) {
     event.stopPropagation();
     const card = cards.find(c => c.id === id);
     if (card && card.status === 'done' && card.scored) {
       adjustPillar(card.scoredPillar, -card.scoredPoints);
     }
     cards = cards.filter(c => c.id !== id);
-    saveCardsToStorage();
+    scheduleSave();
     renderCards();
     renderPillars();
-  }
+  };
 
-  function deleteFromModal() {
+  window.deleteFromModal = function () {
     if (editingCardId) {
       const card = cards.find(c => c.id === editingCardId);
       if (card && card.status === 'done' && card.scored) {
         adjustPillar(card.scoredPillar, -card.scoredPoints);
       }
       cards = cards.filter(c => c.id !== editingCardId);
-      saveCardsToStorage();
+      scheduleSave();
       renderCards();
       renderPillars();
     }
     closeModal();
-  }
+  };
 
-  function saveCardsToStorage() {
-    localStorage.setItem('maxtrack-cards', JSON.stringify(cards));
-  }
-
-  // Central place that handles status changes + score adjustments
   function setCardStatus(card, newStatus) {
     const oldStatus = card.status;
     if (oldStatus === newStatus) return;
 
-    // Leaving "done": remove its scored contribution
     if (oldStatus === 'done' && card.scored) {
       adjustPillar(card.scoredPillar, -card.scoredPoints);
       card.scored = false;
@@ -361,7 +487,6 @@
 
     card.status = newStatus;
 
-    // Entering "done": add its contribution
     if (newStatus === 'done') {
       const pts = parseInt(card.points, 10) || 0;
       adjustPillar(card.pillar, pts);
@@ -370,11 +495,10 @@
       card.scoredPoints = pts;
     }
 
-    saveCardsToStorage();
     renderPillars();
   }
 
-  function moveCard(id, direction, event) {
+  window.moveCard = function (id, direction, event) {
     event.stopPropagation();
     const card = cards.find(c => c.id === id);
     if (!card) return;
@@ -382,8 +506,9 @@
     const newIdx = idx + direction;
     if (newIdx < 0 || newIdx >= STATUSES.length) return;
     setCardStatus(card, STATUSES[newIdx]);
+    scheduleSave();
     renderCards();
-  }
+  };
 
   function renderCards() {
     STATUSES.forEach(status => {
@@ -449,14 +574,11 @@
       const card = cards.find(c => c.id === id);
       if (card) {
         setCardStatus(card, newStatus);
+        scheduleSave();
         renderCards();
       }
     });
   });
-
-  populateSelects();
-  renderPillars();
-  renderCards();
 </script>
 
 </body>
